@@ -49,7 +49,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (listings[0].latitude && listings[0].longitude) {
                 map.flyTo({
                     center: [listings[0].longitude, listings[0].latitude],
-                    zoom: 13
+                    zoom: 10
                 });
             }
         } else {
@@ -68,7 +68,7 @@ document.addEventListener('DOMContentLoaded', () => {
             container: mapContainer,
             style: 'mapbox://styles/mapbox/streets-v12', // Estilo del mapa
             center: [-71.4497269, 18.6678951], // Centro inicial (Dom. Rep., por defecto)
-            zoom: 9
+            zoom: 8
         });
         map.addControl(new mapboxgl.NavigationControl());
     }
