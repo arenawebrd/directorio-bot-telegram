@@ -1,190 +1,188 @@
-const tg = window.Telegram?.WebApp || null;
-
-if (tg) {
-  tg.ready();
-  console.log('Telegram WebApp detectado');
-} else {
-  console.warn('No se detectó Telegram WebApp, funcionando fuera de Telegram');
-}
-
-mapboxgl.accessToken = 'pk.eyJ1Ijoicm9uYWRhbWVzIiwiYSI6ImNtNGhlN2RyZjA2MWoyaXIwcmM5NzRwdnYifQ.oqPy7jl2AFDg-aVwWdd7Sw';
-
+// Configuración Supabase
 const supabaseUrl = 'https://obkrmrnitvledhnhkabd.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9ia3Jtcm5pdHZsZWRobmhrYWJkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDkzMTg2MTgsImV4cCI6MjA2NDg5NDYxOH0.j0fWrh1HHOwoNUSVdeorAe0eFEmwuZXOvahDVrX2MwU';
 
-const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
+
+// Token Mapbox
+mapboxgl.accessToken = 'pk.eyJ1Ijoicm9uYWRhbWVzIiwiYSI6ImNtNGhlN2RyZjA2MWoyaXIwcmM5NzRwdnYifQ.oqPy7jl2AFDg-aVwWdd7Sw';
 
 const map = new mapboxgl.Map({
   container: 'map',
   style: 'mapbox://styles/mapbox/streets-v12',
-  center: [-69.9312, 18.479],
-  zoom: 11
+  center: [-69.9, 18.5], // RD approx center
+  zoom: 7
 });
-
-const listadoEl = document.getElementById('listado');
-const provinciaSelect = document.getElementById('provincia');
-const ciudadSelect = document.getElementById('ciudad');
-const searchInput = document.getElementById('search');
 
 let negocios = [];
 let markers = [];
-let selectedId = null;
+let provincias = [];
+let ciudades = [];
 
-function limpiarMarcadores() {
-  markers.forEach(m => m.marker.remove());
+const selectProvincia = document.getElementById('provincia');
+const selectCiudad = document.getElementById('ciudad');
+const inputSearch = document.getElementById('search');
+const listado = document.getElementById('listado');
+
+async function fetchProvincias() {
+  // Obtener provincias únicas de Supabase
+  const { data, error } = await supabaseClient
+    .from('listings')
+    .select('province', { distinct: true, order: 'province' });
+
+  if (error) {
+    console.error('Error fetching provincias:', error);
+    selectProvincia.innerHTML = '<option>Error cargando provincias</option>';
+    return;
+  }
+
+  provincias = data.map(d => d.province).filter(Boolean).sort();
+  selectProvincia.innerHTML = `<option value="">Todas las provincias</option>` +
+    provincias.map(p => `<option value="${p}">${p}</option>`).join('');
+}
+
+async function fetchCiudades(provincia = '') {
+  if (!provincia) {
+    selectCiudad.innerHTML = `<option value="">Seleccione provincia primero</option>`;
+    return;
+  }
+  const { data, error } = await supabaseClient
+    .from('listings')
+    .select('city', { distinct: true, order: 'city' })
+    .eq('province', provincia);
+
+  if (error) {
+    console.error('Error fetching ciudades:', error);
+    selectCiudad.innerHTML = '<option>Error cargando ciudades</option>';
+    return;
+  }
+
+  ciudades = data.map(d => d.city).filter(Boolean).sort();
+  selectCiudad.innerHTML = `<option value="">Todas las ciudades</option>` +
+    ciudades.map(c => `<option value="${c}">${c}</option>`).join('');
+}
+
+async function fetchNegocios() {
+  let query = supabaseClient.from('listings').select('*');
+
+  const provincia = selectProvincia.value;
+  const ciudad = selectCiudad.value;
+  const search = inputSearch.value.trim().toLowerCase();
+
+  if (provincia) query = query.eq('province', provincia);
+  if (ciudad) query = query.eq('city', ciudad);
+
+  const { data, error } = await query;
+
+  if (error) {
+    console.error('Error fetching negocios:', error);
+    listado.innerHTML = '<p>Error cargando negocios.</p>';
+    return;
+  }
+
+  negocios = data.filter(n => {
+    if (!search) return true;
+    return (n.title && n.title.toLowerCase().includes(search)) ||
+           (n.description && n.description.toLowerCase().includes(search));
+  });
+
+  renderListado();
+  renderMarkers();
+}
+
+function renderListado() {
+  if (negocios.length === 0) {
+    listado.innerHTML = '<p>No se encontraron negocios.</p>';
+    return;
+  }
+
+  listado.innerHTML = negocios.map(n => `
+    <div class="negocio" data-id="${n.place_id}">
+      <strong>${n.title || 'Sin título'}</strong><br />
+      <small>${n.address || ''} - ${n.city || ''} - ${n.province || ''}</small>
+    </div>
+  `).join('');
+
+  // Añadir evento click a cada negocio listado
+  document.querySelectorAll('.negocio').forEach(el => {
+    el.addEventListener('click', () => {
+      const id = el.getAttribute('data-id');
+      const negocio = negocios.find(n => n.place_id === id);
+      if (negocio) {
+        // Centrar mapa y abrir popup
+        map.flyTo({ center: [negocio.longitude, negocio.latitude], zoom: 14 });
+        openPopup(negocio);
+        highlightSelected(id);
+      }
+    });
+  });
+}
+
+function clearMarkers() {
+  markers.forEach(m => m.remove());
   markers = [];
 }
 
-function seleccionarNegocio(id) {
-  selectedId = id;
-  document.querySelectorAll('.negocio').forEach(div => {
-    div.classList.toggle('selected', div.dataset.id === id);
+function renderMarkers() {
+  clearMarkers();
+
+  negocios.forEach(n => {
+    if (!n.latitude || !n.longitude) return;
+
+    const marker = new mapboxgl.Marker()
+      .setLngLat([n.longitude, n.latitude])
+      .addTo(map);
+
+    marker.getElement().addEventListener('click', () => {
+      openPopup(n);
+      highlightSelected(n.place_id);
+    });
+
+    markers.push(marker);
   });
-  markers.forEach(m => {
-    if (m.id === id) {
-      m.marker.togglePopup();
-      map.flyTo({center: m.marker.getLngLat(), zoom: 14});
+}
+
+let currentPopup = null;
+
+function openPopup(negocio) {
+  if (currentPopup) currentPopup.remove();
+
+  const popup = new mapboxgl.Popup({ offset: 25 })
+    .setLngLat([negocio.longitude, negocio.latitude])
+    .setHTML(`
+      <h3>${negocio.title || 'Sin título'}</h3>
+      <p>${negocio.address || ''}</p>
+      <p><a href="${negocio.website || '#'}" target="_blank">Sitio web</a></p>
+      <p>Teléfono: ${negocio.phone || 'No disponible'}</p>
+    `)
+    .addTo(map);
+
+  currentPopup = popup;
+}
+
+function highlightSelected(place_id) {
+  document.querySelectorAll('.negocio').forEach(el => {
+    if (el.getAttribute('data-id') === place_id) {
+      el.classList.add('selected');
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
     } else {
-      m.marker.getPopup().remove();
+      el.classList.remove('selected');
     }
   });
 }
 
-function formatearJSON(jsonObj) {
-  if (!jsonObj) return '';
-  try {
-    return JSON.stringify(jsonObj, null, 2)
-      .replace(/\\n/g, '<br>')
-      .replace(/"/g, '')
-      .replace(/,/g, ', ');
-  } catch {
-    return '';
-  }
-}
-
-function renderListado() {
-  listadoEl.innerHTML = '';
-  const filtrados = filtrarNegocios();
-
-  if (filtrados.length === 0) {
-    listadoEl.innerHTML = '<p style="padding:15px;color:#888;">No se encontraron negocios</p>';
-    limpiarMarcadores();
-    return;
-  }
-
-  filtrados.forEach(n => {
-    const horario = formatearJSON(n.work_time);
-    const attrs = formatearJSON(n.attributes);
-
-    const div = document.createElement('div');
-    div.className = 'negocio';
-    div.dataset.id = n.place_id;
-    div.innerHTML = `
-      <h3>${n.title}</h3>
-      <p>${n.address || ''}</p>
-      <p><small>${n.phone || ''}</small></p>
-      ${horario ? `<p><strong>Horario:</strong> <br>${horario}</p>` : ''}
-      ${attrs ? `<p><strong>Atributos:</strong> <br>${attrs}</p>` : ''}
-    `;
-    div.addEventListener('click', () => seleccionarNegocio(n.place_id));
-    listadoEl.appendChild(div);
-  });
-}
-
-function filtrarNegocios() {
-  const provincia = provinciaSelect.value;
-  const ciudad = ciudadSelect.value;
-  const searchTerm = searchInput.value.toLowerCase();
-
-  return negocios.filter(n => {
-    return (!provincia || n.province === provincia) &&
-           (!ciudad || n.city === ciudad) &&
-           (!searchTerm || (n.title && n.title.toLowerCase().includes(searchTerm)));
-  });
-}
-
-function mostrarNegociosEnMapa() {
-  limpiarMarcadores();
-  const filtrados = filtrarNegocios();
-
-  filtrados.forEach(n => {
-    if (!n.latitude || !n.longitude) return;
-
-    const horario = formatearJSON(n.work_time);
-    const attrs = formatearJSON(n.attributes);
-
-    const popupHTML = `
-      <h3>${n.title}</h3>
-      <p>${n.address || ''}</p>
-      <p><small>${n.phone || ''}</small></p>
-      ${horario ? `<p><strong>Horario:</strong> <br>${horario}</p>` : ''}
-      ${attrs ? `<p><strong>Atributos:</strong> <br>${attrs}</p>` : ''}
-    `;
-
-    const popup = new mapboxgl.Popup({offset: 25}).setHTML(popupHTML);
-    const marker = new mapboxgl.Marker()
-      .setLngLat([n.longitude, n.latitude])
-      .setPopup(popup)
-      .addTo(map);
-
-    marker.getElement().addEventListener('click', () => seleccionarNegocio(n.place_id));
-    markers.push({id: n.place_id, marker});
-  });
-}
-
-async function cargarFiltros() {
-  try {
-    console.log('Cargando filtros...');
-    const { data, error } = await supabase.from('listings').select('province, city');
-    if (error) throw error;
-
-    console.log('Datos filtros:', data);
-
-    const provincias = [...new Set(data.map(d => d.province).filter(Boolean))].sort();
-    const ciudades = [...new Set(data.map(d => d.city).filter(Boolean))].sort();
-
-    provinciaSelect.innerHTML = '<option value="">Todas Provincias</option>' + provincias.map(p => `<option value="${p}">${p}</option>`).join('');
-    ciudadSelect.innerHTML = '<option value="">Todas Ciudades</option>' + ciudades.map(c => `<option value="${c}">${c}</option>`).join('');
-  } catch(err) {
-    console.error('Error cargando filtros:', err);
-    alert('Error al cargar filtros: ' + err.message);
-  }
-}
-
-async function cargarNegocios() {
-  try {
-    console.log('Cargando negocios...');
-    const { data, error } = await supabase.from('listings').select('*').limit(100);
-    if (error) throw error;
-
-    console.log('Negocios cargados:', data.length);
-    negocios = data;
-    renderListado();
-    mostrarNegociosEnMapa();
-  } catch(err) {
-    console.error('Error cargando negocios:', err);
-    alert('Error al cargar negocios: ' + err.message);
-  }
-}
-
-provinciaSelect.addEventListener('change', () => {
-  renderListado();
-  mostrarNegociosEnMapa();
-});
-ciudadSelect.addEventListener('change', () => {
-  renderListado();
-  mostrarNegociosEnMapa();
-});
-searchInput.addEventListener('input', () => {
-  renderListado();
-  mostrarNegociosEnMapa();
+// Eventos para filtros y búsqueda
+selectProvincia.addEventListener('change', async () => {
+  await fetchCiudades(selectProvincia.value);
+  await fetchNegocios();
 });
 
-window.onload = () => {
-  map.resize();
+selectCiudad.addEventListener('change', fetchNegocios);
+inputSearch.addEventListener('input', fetchNegocios);
 
-  map.on('load', () => {
-    cargarFiltros();
-    cargarNegocios();
-  });
-};
+// Inicializar app
+(async function init() {
+  await fetchProvincias();
+  await fetchCiudades();
+  await fetchNegocios();
+})();
