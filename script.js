@@ -5,8 +5,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9ia3Jtcm5pdHZsZWRobmhrYWJkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDkzMTg2MTgsImV4cCI6MjA2NDg5NDYxOH0.j0fWrh1HHOwoNUSVdeorAe0eFEmwuZXOvahDVrX2MwU';
     const MAPBOX_TOKEN = 'pk.eyJ1Ijoicm9uYWRhbWVzIiwiYSI6ImNtNGhlN2RyZjA2MWoyaXIwcmM5NzRwdnYifQ.oqPy7jl2AFDg-aVwWdd7Sw';
 
-    // Inicializar Supabase
-    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    // Inicializar Supabase. La librería global se llama 'supabase'.
+    // Guardamos nuestra conexión específica en una constante llamada 'client'.
+    const client = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     // --- ELEMENTOS DEL DOM ---
     const listingsList = document.getElementById('listings-list');
@@ -28,8 +29,8 @@ document.addEventListener('DOMContentLoaded', () => {
         // 1. Inicializar mapa
         initializeMap();
 
-        // 2. Obtener datos de Supabase
-        const { data: listings, error } = await supabase
+        // 2. Obtener datos de Supabase usando nuestra variable 'client'
+        const { data: listings, error } = await client
             .from('listings')
             .select('*');
 
