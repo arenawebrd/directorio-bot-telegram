@@ -1,13 +1,24 @@
+// Detecta entorno Telegram WebApp sin error fuera de Telegram
+const tg = window.Telegram?.WebApp || null;
+
+if (tg) {
+  tg.ready();
+  console.log('Telegram WebApp detectado');
+} else {
+  console.warn('No se detectó Telegram WebApp, funcionando fuera de Telegram');
+}
+
 mapboxgl.accessToken = 'pk.eyJ1Ijoicm9uYWRhbWVzIiwiYSI6ImNtNGhlN2RyZjA2MWoyaXIwcmM5NzRwdnYifQ.oqPy7jl2AFDg-aVwWdd7Sw';
 
 const supabaseUrl = 'https://obkrmrnitvledhnhkabd.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9ia3Jtcm5pdHZsZWRobmhrYWJkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDkzMTg2MTgsImV4cCI6MjA2NDg5NDYxOH0.j0fWrh1HHOwoNUSVdeorAe0eFEmwuZXOvahDVrX2MwU';
+
 const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
 const map = new mapboxgl.Map({
   container: 'map',
   style: 'mapbox://styles/mapbox/streets-v12',
-  center: [-69.9312, 18.479],
+  center: [-69.9312, 18.479], // Centro en RD
   zoom: 11
 });
 
@@ -21,7 +32,7 @@ let markers = [];
 let selectedId = null;
 
 function limpiarMarcadores() {
-  markers.forEach(m => m.remove());
+  markers.forEach(m => m.marker.remove());
   markers = [];
 }
 
@@ -44,7 +55,15 @@ function seleccionarNegocio(id) {
 
 function renderListado() {
   listadoEl.innerHTML = '';
-  negocios.forEach(n => {
+  const filtrados = filtrarNegocios();
+
+  if (filtrados.length === 0) {
+    listadoEl.innerHTML = '<p style="padding:15px;color:#888;">No se encontraron negocios</p>';
+    limpiarMarcadores();
+    return;
+  }
+
+  filtrados.forEach(n => {
     const div = document.createElement('div');
     div.className = 'negocio';
     div.dataset.id = n.place_id;
