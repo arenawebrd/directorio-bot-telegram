@@ -1,4 +1,3 @@
-// Detecta entorno Telegram WebApp sin error fuera de Telegram
 const tg = window.Telegram?.WebApp || null;
 
 if (tg) {
@@ -18,7 +17,7 @@ const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 const map = new mapboxgl.Map({
   container: 'map',
   style: 'mapbox://styles/mapbox/streets-v12',
-  center: [-69.9312, 18.479], // Centro en RD
+  center: [-69.9312, 18.479],
   zoom: 11
 });
 
@@ -38,11 +37,9 @@ function limpiarMarcadores() {
 
 function seleccionarNegocio(id) {
   selectedId = id;
-  // Marca el item seleccionado en lista
   document.querySelectorAll('.negocio').forEach(div => {
     div.classList.toggle('selected', div.dataset.id === id);
   });
-  // Abre popup del marcador seleccionado y centra el mapa
   markers.forEach(m => {
     if (m.id === id) {
       m.marker.togglePopup();
@@ -116,6 +113,7 @@ async function cargarFiltros() {
     console.error('Error cargando filtros:', error);
     return;
   }
+  console.log('Filtros cargados:', data.length);
   const provincias = [...new Set(data.map(d => d.province).filter(Boolean))].sort();
   const ciudades = [...new Set(data.map(d => d.city).filter(Boolean))].sort();
 
@@ -129,6 +127,7 @@ async function cargarNegocios() {
     console.error('Error cargando negocios:', error);
     return;
   }
+  console.log('Negocios cargados:', data.length);
   negocios = data;
   renderListado();
   mostrarNegociosEnMapa();
@@ -147,7 +146,14 @@ searchInput.addEventListener('input', () => {
   mostrarNegociosEnMapa();
 });
 
-map.on('load', () => {
-  cargarFiltros();
-  cargarNegocios();
-});
+// Espera a que todo el DOM esté listo
+window.onload = () => {
+  // Forzar resize del mapa para que cargue bien
+  map.resize();
+
+  // Solo cargar después de que el mapa esté listo
+  map.on('load', () => {
+    cargarFiltros();
+    cargarNegocios();
+  });
+};
