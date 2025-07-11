@@ -67,8 +67,8 @@ document.addEventListener('DOMContentLoaded', () => {
         map = new mapboxgl.Map({
             container: mapContainer,
             style: 'mapbox://styles/mapbox/streets-v12', // Estilo del mapa
-            center: [-3.703790, 40.416775], // Centro inicial (Madrid, por defecto)
-            zoom: 11
+            center: [-71.4497269, 18.6678951], // Centro inicial (Dom. Rep., por defecto)
+            zoom: 9
         });
         map.addControl(new mapboxgl.NavigationControl());
     }
