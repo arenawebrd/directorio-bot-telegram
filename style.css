@@ -36,6 +36,8 @@ body {
 .listings-header {
     padding: 1rem 1.5rem;
     border-bottom: 1px solid var(--border-color);
+    position: relative;
+    z-index: 1;
 }
 
 .listings-header h2 {
