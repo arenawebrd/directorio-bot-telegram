@@ -313,7 +313,14 @@
         
         <div class="map-container">
             <button class="mobile-toggle" id="mobileToggle">☰</button>
-            <div id="map"></div>
+            <div id="map">
+                <div style="display: flex; align-items: center; justify-content: center; height: 100%; background: #f5f5f5; color: #666; text-align: center;">
+                    <div>
+                        <div>🗺️ Cargando mapa...</div>
+                        <div style="font-size: 12px; margin-top: 5px;">Mapbox GL JS</div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -462,30 +469,51 @@
         
         // Inicializar mapa
         function initMap() {
-            try {
-                mapboxgl.accessToken = MAPBOX_TOKEN;
-                
-                map = new mapboxgl.Map({
-                    container: 'map',
-                    style: 'mapbox://styles/mapbox/streets-v11',
-                    center: [-3.7038, 40.4168], // Madrid por defecto
-                    zoom: 11
-                });
-                
-                map.addControl(new mapboxgl.NavigationControl());
-                
-                map.on('load', () => {
-                    console.log('🗺️ Mapa cargado correctamente');
-                    map.resize();
-                });
-                
-                map.on('error', (e) => {
-                    console.error('❌ Error en el mapa:', e);
-                });
-                
-            } catch (error) {
-                console.error('❌ Error inicializando mapa:', error);
-            }
+            return new Promise((resolve, reject) => {
+                try {
+                    console.log('🗺️ Inicializando mapa...');
+                    console.log('🔑 Mapbox token:', MAPBOX_TOKEN.substring(0, 20) + '...');
+                    
+                    // Verificar si Mapbox está disponible
+                    if (typeof mapboxgl === 'undefined') {
+                        throw new Error('Mapbox GL JS no está cargado');
+                    }
+                    
+                    mapboxgl.accessToken = MAPBOX_TOKEN;
+                    
+                    map = new mapboxgl.Map({
+                        container: 'map',
+                        style: 'mapbox://styles/mapbox/streets-v11',
+                        center: [-3.7038, 40.4168], // Madrid por defecto
+                        zoom: 11
+                    });
+                    
+                    map.addControl(new mapboxgl.NavigationControl());
+                    
+                    map.on('load', () => {
+                        console.log('✅ Mapa cargado correctamente');
+                        map.resize();
+                        resolve(map);
+                    });
+                    
+                    map.on('error', (e) => {
+                        console.error('❌ Error en el mapa:', e);
+                        reject(e);
+                    });
+                    
+                    // Timeout de seguridad
+                    setTimeout(() => {
+                        if (!map.loaded()) {
+                            console.warn('⚠️ Mapa tardando en cargar...');
+                            resolve(map); // Resolver de todas formas
+                        }
+                    }, 10000);
+                    
+                } catch (error) {
+                    console.error('❌ Error inicializando mapa:', error);
+                    reject(error);
+                }
+            });
         }
         
         // Poblar filtro de categorías
@@ -529,7 +557,12 @@
         
         // Agregar marcadores al mapa
         function addMarkersToMap() {
-            if (!map) return;
+            if (!map || !map.loaded()) {
+                console.warn('⚠️ Mapa no está listo para agregar marcadores');
+                return;
+            }
+            
+            console.log('📍 Agregando marcadores al mapa...');
             
             // Limpiar marcadores existentes
             markers.forEach(marker => marker.remove());
@@ -546,47 +579,57 @@
                     const lat = parseFloat(listing.latitude);
                     
                     if (!isNaN(lng) && !isNaN(lat)) {
-                        const marker = new mapboxgl.Marker({
-                            color: '#2196F3'
-                        })
-                        .setLngLat([lng, lat])
-                        .addTo(map);
-                        
-                        // Crear popup
-                        const popup = new mapboxgl.Popup({
-                            offset: 25,
-                            closeButton: true,
-                            closeOnClick: true
-                        }).setHTML(`
-                            <div class="popup-content">
-                                <div class="popup-title">${listing.title || 'Sin título'}</div>
-                                ${listing.category ? `<div class="popup-category">${listing.category}</div>` : ''}
-                                <div class="popup-address">${listing.address || 'Sin dirección'}</div>
-                                ${listing.phone ? `<div class="popup-phone">📞 ${listing.phone}</div>` : ''}
-                                ${listing.website ? `<div class="popup-website"><a href="${listing.website}" target="_blank">🌐 Sitio web</a></div>` : ''}
-                            </div>
-                        `);
-                        
-                        marker.setPopup(popup);
-                        
-                        // Evento click en marcador
-                        marker.getElement().addEventListener('click', () => {
-                            selectListing(listing.id);
-                        });
-                        
-                        markers.push(marker);
-                        bounds.extend([lng, lat]);
-                        hasValidCoords = true;
+                        try {
+                            const marker = new mapboxgl.Marker({
+                                color: '#2196F3'
+                            })
+                            .setLngLat([lng, lat])
+                            .addTo(map);
+                            
+                            // Crear popup
+                            const popup = new mapboxgl.Popup({
+                                offset: 25,
+                                closeButton: true,
+                                closeOnClick: true
+                            }).setHTML(`
+                                <div class="popup-content">
+                                    <div class="popup-title">${listing.title || 'Sin título'}</div>
+                                    ${listing.category ? `<div class="popup-category">${listing.category}</div>` : ''}
+                                    <div class="popup-address">${listing.address || 'Sin dirección'}</div>
+                                    ${listing.phone ? `<div class="popup-phone">📞 ${listing.phone}</div>` : ''}
+                                    ${listing.website ? `<div class="popup-website"><a href="${listing.website}" target="_blank">🌐 Sitio web</a></div>` : ''}
+                                </div>
+                            `);
+                            
+                            marker.setPopup(popup);
+                            
+                            // Evento click en marcador
+                            marker.getElement().addEventListener('click', () => {
+                                selectListing(listing.id);
+                            });
+                            
+                            markers.push(marker);
+                            bounds.extend([lng, lat]);
+                            hasValidCoords = true;
+                        } catch (error) {
+                            console.error('❌ Error creando marcador:', error);
+                        }
                     }
                 }
             });
             
+            console.log(`📍 Marcadores agregados: ${markers.length}`);
+            
             // Ajustar vista del mapa
             if (hasValidCoords) {
-                map.fitBounds(bounds, {
-                    padding: 50,
-                    maxZoom: 15
-                });
+                try {
+                    map.fitBounds(bounds, {
+                        padding: 50,
+                        maxZoom: 15
+                    });
+                } catch (error) {
+                    console.error('❌ Error ajustando vista del mapa:', error);
+                }
             }
         }
         
@@ -698,19 +741,41 @@
             console.log('🚀 Inicializando aplicación...');
             
             try {
-                await initMap();
+                // Configurar event listeners primero
                 setupEventListeners();
+                
+                // Inicializar mapa
+                await initMap();
+                console.log('✅ Mapa inicializado');
                 
                 // Cargar automáticamente los datos
                 await loadAllListings();
+                console.log('✅ Datos cargados');
                 
             } catch (error) {
                 console.error('❌ Error en inicialización:', error);
-                listingsContainer.innerHTML = `
-                    <div class="error">
-                        ❌ Error de inicialización: ${error.message}
-                    </div>
-                `;
+                
+                // Mostrar error específico del mapa
+                if (error.message && error.message.includes('Mapbox')) {
+                    const mapContainer = document.getElementById('map');
+                    mapContainer.innerHTML = `
+                        <div style="display: flex; align-items: center; justify-content: center; height: 100%; background: #f5f5f5; color: #666; text-align: center; padding: 20px;">
+                            <div>
+                                <h3>❌ Error del Mapa</h3>
+                                <p>${error.message}</p>
+                                <button onclick="location.reload()" style="margin-top: 10px; padding: 8px 16px; background: #2196F3; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                                    Reintentar
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    listingsContainer.innerHTML = `
+                        <div class="error">
+                            ❌ Error de inicialización: ${error.message}
+                        </div>
+                    `;
+                }
             }
         });
     </script>
