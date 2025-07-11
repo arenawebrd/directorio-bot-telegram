@@ -1,0 +1,391 @@
+/* Estilos generales y variables */
+:root {
+    --primary-color: #007BFF;
+    --light-gray: #f8f9fa;
+    --gray: #6c757d;
+    --dark-gray: #343a40;
+    --border-color: #dee2e6;
+    --shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: var(--light-gray);
+    height: 100vh;
+    overflow: hidden; /* Evita el scroll en el body */
+}
+
+/* Contenedor principal de la App */
+#app-container {
+    display: flex;
+    height: 100vh;
+    width: 100%;
+}
+
+/* Columna de la lista */
+#listings-container {
+    width: 420px;
+    background: #fff;
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid var(--border-color);
+}
+
+.listings-header {
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.listings-header h2 {
+    margin: 0;
+    font-size: 1.25rem;
+}
+
+#search-container {
+    margin-top: 1rem;
+    display: flex;
+    gap: 0.5rem;
+}
+
+#search-container select {
+    flex-grow: 1;
+    padding: 0.5rem;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background-color: white;
+}
+
+#listings-list {
+    overflow-y: auto;
+    flex-grow: 1;
+}
+
+.listing-item {
+    display: flex;
+    gap: 1rem;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.listing-item:hover {
+    background-color: var(--light-gray);
+}
+
+.listing-item.active {
+    background-color: #e7f1ff;
+    border-left: 4px solid var(--primary-color);
+    padding-left: calc(1.5rem - 4px);
+}
+
+.listing-item h3 {
+    margin: 0 0 0.25rem 0;
+    font-size: 1rem;
+    color: var(--dark-gray);
+}
+
+.listing-item p {
+    margin: 0;
+    font-size: 0.875rem;
+    color: var(--gray);
+}
+
+.listing-item .rating {
+    font-size: 0.875rem;
+    color: var(--gray);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0.25rem 0;
+}
+
+.listing-item .rating-stars {
+    color: #fbbc05;
+}
+
+.listing-info {
+    flex-grow: 1;
+}
+
+.listing-image img {
+    width: 100px;
+    height: 100px;
+    border-radius: 8px;
+    object-fit: cover;
+}
+
+.listing-item .status.open {
+    color: #34a853;
+    font-weight: 500;
+}
+
+.listing-item .status.closed {
+    color: #ea4335;
+    font-weight: 500;
+}
+
+.loader {
+    padding: 2rem;
+    text-align: center;
+    color: var(--gray);
+}
+
+
+/* Columna del mapa */
+#map-container {
+    flex-grow: 1;
+    height: 100vh;
+}
+
+#map {
+    width: 100%;
+    height: 100%;
+}
+
+/* Estilos para el popup del mapa */
+.mapboxgl-popup-content {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    padding: 15px;
+    box-shadow: var(--shadow);
+    border-radius: 8px;
+}
+.mapboxgl-popup-content h4 {
+    margin: 0 0 5px 0;
+    font-size: 1rem;
+}
+.mapboxgl-popup-content p {
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--gray);
+}
+.mapboxgl-popup-close-button {
+    font-size: 1.5rem;
+    color: var(--gray);
+}
+
+
+/* Modal de detalles */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background: #fff;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 380px;
+    max-height: 85vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow: var(--shadow);
+    position: relative;
+}
+
+.modal-close {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    background: white;
+    border: none;
+    font-size: 2rem;
+    color: var(--gray);
+    cursor: pointer;
+    z-index: 1010;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+}
+
+#modal-body {
+    padding: 0;
+    overflow-y: auto;
+}
+
+.modal-main-image {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+}
+
+.modal-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+}
+.modal-header h2 { margin: 0 0 0.5rem; }
+.modal-header p { margin: 0; color: var(--gray); }
+.rating-stars { color: #fbbc05; }
+
+.modal-details {
+    padding: 1.5rem;
+    display: grid;
+    gap: 1rem;
+}
+.detail-item {
+    display: flex;
+    align-items: flex-start; /* Alinea el icono con la parte superior del contenido */
+    gap: 1rem;
+    font-size: 0.9rem;
+}
+.detail-item svg {
+    width: 20px;
+    height: 20px;
+    color: var(--primary-color);
+    flex-shrink: 0;
+}
+
+.work-time-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+.work-time-table td {
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--light-gray);
+}
+.work-time-table td:first-child {
+    font-weight: 500;
+    text-transform: capitalize; /* Pone en mayúscula la primera letra del día */
+}
+
+/* Estilos para el horario desplegable */
+.schedule-container {
+    width: 100%;
+}
+
+.schedule-summary {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    padding: 0.25rem 0;
+}
+
+.schedule-summary strong {
+    font-weight: 500;
+}
+
+.schedule-summary .status.open {
+    color: #34a853; /* Verde */
+}
+
+.schedule-summary .status.closed {
+    color: #ea4335; /* Rojo */
+}
+
+.schedule-summary .arrow {
+    width: 16px;
+    height: 16px;
+    transition: transform 0.2s ease;
+}
+
+.schedule-details {
+    display: none; /* Oculto por defecto */
+    padding-left: 1rem; /* Indentación para la tabla */
+    margin-top: 0.5rem;
+}
+
+.schedule-container.open .schedule-details {
+    display: block;
+}
+
+.schedule-container.open .arrow {
+    transform: rotate(180deg);
+}
+
+
+/* Botones de vista móvil */
+#mobile-view-toggle {
+    display: none; /* Oculto en desktop por defecto */
+}
+
+#mobile-view-toggle button {
+    background: transparent;
+    border: 1px solid var(--border-color);
+    padding: 10px 20px;
+    cursor: pointer;
+    border-radius: 25px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 500;
+    color: var(--gray);
+    flex-grow: 1;
+    justify-content: center;
+}
+
+#mobile-view-toggle button.active {
+    background: var(--primary-color);
+    color: white;
+}
+
+
+/* Diseño Responsivo (Móvil) */
+@media (max-width: 768px) {
+    #app-container {
+        flex-direction: column;
+    }
+
+    #listings-container {
+        width: 100%;
+        border-right: none;
+    }
+
+    .listing-image img {
+        width: 80px;
+        height: 80px;
+    }
+
+    .listing-item h3 {
+        font-size: 0.9rem;
+    }
+    .listing-item p {
+        font-size: 0.8rem;
+    }
+
+    .modal-content {
+        width: 95%;
+        max-height: 90vh;
+    }
+
+    .listings-header {
+        padding: 0.75rem 1rem;
+    }
+
+#search-container {
+    padding: 0 1rem;
+    margin-top: 0.75rem;
+}
+
+
+    /* Ocultar la columna de lista o mapa según el estado */
+    #app-container:not(.map-view-active) #map-container {
+        display: none;
+    }
+
+    #app-container.map-view-active #listings-list {
+        display: none;
+    }
+
+    #mobile-view-toggle {
+        display: flex;
+        margin-top: 1rem;
+        padding: 0 1rem;
+        gap: 0.5rem;
+    }
+}
