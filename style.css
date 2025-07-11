@@ -344,6 +344,10 @@ body {
     #listings-container {
         width: 100%;
         border-right: none;
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
     }
 
     .listing-image img {
