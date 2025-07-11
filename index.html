@@ -2,24 +2,23 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Negocios en RD</title>
-  <link href="style.css" rel="stylesheet"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Negocios en RD - Estilo Google Maps</title>
+  <link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet" />
+  <link href="style.css" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
-  <link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet" />
 </head>
 <body>
-  <h1>Negocios en RD</h1>
-  <div class="filtros">
-    <select id="provincia">
-      <option value="">Cargando provincias...</option>
-    </select>
-    <select id="ciudad">
-      <option value="">Cargando ciudades...</option>
-    </select>
-  </div>
-  <div id="map"></div>
+  <header>
+    <input id="search" placeholder="Buscar negocios..." autocomplete="off"/>
+    <select id="provincia"><option value="">Todas Provincias</option></select>
+    <select id="ciudad"><option value="">Todas Ciudades</option></select>
+  </header>
+  <main>
+    <aside id="listado"></aside>
+    <div id="map"></div>
+  </main>
   <script src="script.js"></script>
 </body>
 </html>
