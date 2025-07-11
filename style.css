@@ -195,6 +195,7 @@ body {
     flex-direction: column;
     box-shadow: var(--shadow);
     position: relative;
+    margin: auto;
 }
 
 .modal-close {
@@ -366,7 +367,7 @@ body {
     }
 
     .modal-content {
-        width: 85%;
+        width: 95%;
         max-height: 90vh;
     }
 
