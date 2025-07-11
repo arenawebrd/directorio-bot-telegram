@@ -1,25 +1,106 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Negocios en RD - Mini App Responsive</title>
-<link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet" />
-<link href="style.css" rel="stylesheet" />
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/supabase.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-<script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MiniApp Negocios RD</title>
+  
+  <!-- Mapbox CSS -->
+  <link href='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css' rel='stylesheet' />
+  
+  <style>
+    /* Reset y estilos base */
+    * {
+      box-sizing: border-box;
+    }
+    body, html {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+    }
+
+    #filtros {
+      background: #f4f4f4;
+      padding: 10px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    select, input[type="text"] {
+      padding: 8px 10px;
+      font-size: 1rem;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      flex-grow: 1;
+      min-width: 150px;
+    }
+
+    #map {
+      flex: 1 1 50vh;
+      min-height: 300px;
+    }
+
+    #listado {
+      flex: 1 1 45vh;
+      max-height: 45vh;
+      overflow-y: auto;
+      border-top: 1px solid #ddd;
+      background: #fff;
+    }
+
+    .negocio {
+      border-bottom: 1px solid #ddd;
+      padding: 10px;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+    }
+
+    .negocio:hover {
+      background-color: #e6f2ff;
+    }
+
+    .negocio.selected {
+      background-color: #cceeff;
+      font-weight: bold;
+    }
+
+    /* Responsive */
+    @media (max-width: 600px) {
+      #filtros {
+        flex-direction: column;
+      }
+      select, input[type="text"] {
+        flex-grow: unset;
+        width: 100%;
+      }
+    }
+  </style>
 </head>
 <body>
-<header>
-  <input id="search" placeholder="Buscar negocios..." autocomplete="off"/>
-  <select id="provincia"><option value="">Todas Provincias</option></select>
-  <select id="ciudad"><option value="">Todas Ciudades</option></select>
-</header>
-<main>
-  <aside id="listado"></aside>
+
+  <div id="filtros">
+    <select id="provincia"><option>Cargando provincias...</option></select>
+    <select id="ciudad"><option>Cargando ciudades...</option></select>
+    <input type="text" id="search" placeholder="Buscar negocios..." />
+  </div>
+
   <div id="map"></div>
-</main>
-<script src="script.js"></script>
+
+  <div id="listado"></div>
+
+  <!-- Librería Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/supabase.min.js"></script>
+
+  <!-- Mapbox JS -->
+  <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
+
+  <!-- Tu script.js con toda la lógica -->
+  <script src="script.js"></script>
+
 </body>
 </html>
