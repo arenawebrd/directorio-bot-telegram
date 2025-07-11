@@ -201,6 +201,7 @@
         #map {
             width: 100%;
             height: 100%;
+            min-height: 200px; /* Added for robustness in webviews */
         }
         
         /* Mobile toggle button (for opening sidebar on mobile) */
@@ -529,16 +530,19 @@
                     return;
                 }
 
-                // Check if the map container has valid dimensions before initializing Mapbox
-                if (mapElement.offsetWidth === 0 || mapElement.offsetHeight === 0) {
-                    console.warn('⚠️ Map container has zero dimensions. Retrying map initialization in 100ms...');
-                    setTimeout(() => initMap().then(resolve).catch(reject), 100);
-                    return;
-                }
+                // Polling loop to wait for map container to have valid dimensions
+                const checkDimensionsAndInit = () => {
+                    const mapContainerWidth = mapElement.offsetWidth;
+                    const mapContainerHeight = mapElement.offsetHeight;
+                    console.log(`Map container dimensions: ${mapContainerWidth}x${mapContainerHeight}`);
 
-                // Introduce a small delay to ensure rendering context is fully ready.
-                // This helps mitigate subtle race conditions in webview environments.
-                setTimeout(() => {
+                    if (mapContainerWidth === 0 || mapContainerHeight === 0) {
+                        console.warn('⚠️ Map container has zero dimensions. Retrying map initialization in 100ms...');
+                        setTimeout(checkDimensionsAndInit, 100); // Retry after 100ms
+                        return;
+                    }
+
+                    // Dimensions are valid, proceed with Mapbox initialization
                     try {
                         console.log('🗺️ Inicializando mapa...');
                         // Confirm that mapboxgl is available right before initialization
@@ -573,10 +577,12 @@
                         });
                         
                     } catch (error) {
-                        console.error('❌ Error inicializando mapa (dentro de setTimeout):', error);
+                        console.error('❌ Error inicializando mapa (dentro de checkDimensionsAndInit):', error);
                         reject(error);
                     }
-                }, 50); // Small delay (50ms)
+                };
+
+                checkDimensionsAndInit(); // Start the dimension check and initialization process
             });
         }
         
