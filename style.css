@@ -1,26 +1,57 @@
-body {
+* {
+  box-sizing: border-box;
+}
+body, html {
   margin: 0;
-  font-family: Arial, sans-serif;
-}
-
-h1 {
-  text-align: center;
-  margin: 10px;
-}
-
-.filtros {
+  height: 100vh;
+  font-family: 'Roboto', Arial, sans-serif;
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+}
+header {
+  display: flex;
   gap: 10px;
   padding: 10px;
+  background: #fff;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+  align-items: center;
 }
-
-select {
-  padding: 5px;
+header input, header select {
+  padding: 8px;
+  font-size: 14px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+main {
+  display: flex;
+  flex-grow: 1;
+  height: calc(100vh - 54px);
+}
+#listado {
+  width: 350px;
+  overflow-y: auto;
+  background: #fff;
+  border-right: 1px solid #ddd;
+}
+.negocio {
+  padding: 10px;
+  border-bottom: 1px solid #eee;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+.negocio:hover, .negocio.selected {
+  background-color: #f0f0f0;
+}
+.negocio h3 {
+  margin: 0 0 5px 0;
   font-size: 16px;
+  color: #222;
 }
-
+.negocio p {
+  margin: 0;
+  font-size: 13px;
+  color: #666;
+}
 #map {
-  width: 100vw;
-  height: 85vh;
+  flex-grow: 1;
 }
