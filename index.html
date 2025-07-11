@@ -262,6 +262,9 @@
             
             <div class="search-container">
                 <input type="text" class="search-box" id="searchBox" placeholder="Buscar negocios...">
+                <button onclick="testConnection()" style="margin-top: 10px; padding: 8px 16px; background: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer; width: 100%;">
+                    Probar Conexión
+                </button>
             </div>
             
             <div class="filters">
@@ -332,19 +335,94 @@
             });
         }
         
+        // Función para probar la conexión
+        async function testConnection() {
+            listingsContainer.innerHTML = '<div class="loading">Probando conexión...</div>';
+            
+            try {
+                console.log('Probando conexión a Supabase...');
+                console.log('URL:', SUPABASE_URL);
+                console.log('Key (primeros 20 chars):', SUPABASE_KEY.substring(0, 20) + '...');
+                
+                // Probar conexión básica
+                const { data, error, count } = await supabase
+                    .from('listings')
+                    .select('*', { count: 'exact' })
+                    .limit(5);
+                
+                console.log('Resultado de prueba:', { data, error, count });
+                
+                if (error) {
+                    console.error('Error en prueba:', error);
+                    listingsContainer.innerHTML = `<div class="loading">Error: ${error.message}</div>`;
+                    return;
+                }
+                
+                listingsContainer.innerHTML = `
+                    <div class="loading">
+                        ✅ Conexión exitosa!<br>
+                        Registros encontrados: ${count}<br>
+                        Primeros 5 registros cargados<br>
+                        <button onclick="loadListings()" style="margin-top: 10px; padding: 8px 16px; background: #2196F3; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                            Cargar Todos
+                        </button>
+                    </div>
+                `;
+                
+                // Mostrar datos en consola
+                if (data && data.length > 0) {
+                    console.log('Ejemplo de registro:', data[0]);
+                }
+                
+            } catch (error) {
+                console.error('Error en testConnection:', error);
+                listingsContainer.innerHTML = `<div class="loading">Error de conexión: ${error.message}</div>`;
+            }
+        }
+
         // Cargar listings desde Supabase
         async function loadListings() {
             try {
+                console.log('Iniciando carga de listings...');
+                
+                // Primero probamos la conexión
                 const { data, error } = await supabase
                     .from('listings')
                     .select('*')
-                    .not('latitude', 'is', null)
-                    .not('longitude', 'is', null);
+                    .limit(100); // Limitamos para prueba inicial
                 
-                if (error) throw error;
+                console.log('Respuesta de Supabase:', { data, error });
                 
-                allListings = data;
+                if (error) {
+                    console.error('Error de Supabase:', error);
+                    throw error;
+                }
+                
+                if (!data || data.length === 0) {
+                    console.log('No se encontraron datos en la tabla listings');
+                    listingsContainer.innerHTML = '<div class="loading">No se encontraron negocios en la base de datos</div>';
+                    return;
+                }
+                
+                // Filtrar solo los que tienen coordenadas válidas
+                const validListings = data.filter(listing => {
+                    const hasCoords = listing.latitude && listing.longitude && 
+                                     !isNaN(listing.latitude) && !isNaN(listing.longitude);
+                    if (!hasCoords) {
+                        console.log('Listing sin coordenadas válidas:', listing.title);
+                    }
+                    return hasCoords;
+                });
+                
+                console.log(`Listings cargados: ${data.length}, con coordenadas válidas: ${validListings.length}`);
+                
+                allListings = validListings;
                 filteredListings = [...allListings];
+                
+                if (allListings.length === 0) {
+                    listingsContainer.innerHTML = '<div class="loading">No se encontraron negocios con coordenadas válidas</div>';
+                    return;
+                }
                 
                 populateCategories();
                 renderListings();
@@ -352,7 +430,13 @@
                 
             } catch (error) {
                 console.error('Error cargando listings:', error);
-                listingsContainer.innerHTML = '<div class="loading">Error al cargar los negocios</div>';
+                let errorMessage = 'Error al cargar los negocios';
+                
+                if (error.message) {
+                    errorMessage += ': ' + error.message;
+                }
+                
+                listingsContainer.innerHTML = `<div class="loading">${errorMessage}</div>`;
             }
         }
         
