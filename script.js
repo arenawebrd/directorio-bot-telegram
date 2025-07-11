@@ -50,6 +50,18 @@ function seleccionarNegocio(id) {
   });
 }
 
+function formatearJSON(jsonObj) {
+  if (!jsonObj) return '';
+  try {
+    return JSON.stringify(jsonObj, null, 2)
+      .replace(/\\n/g, '<br>')
+      .replace(/"/g, '')
+      .replace(/,/g, ', ');
+  } catch {
+    return '';
+  }
+}
+
 function renderListado() {
   listadoEl.innerHTML = '';
   const filtrados = filtrarNegocios();
@@ -61,6 +73,9 @@ function renderListado() {
   }
 
   filtrados.forEach(n => {
+    const horario = formatearJSON(n.work_time);
+    const attrs = formatearJSON(n.attributes);
+
     const div = document.createElement('div');
     div.className = 'negocio';
     div.dataset.id = n.place_id;
@@ -68,6 +83,8 @@ function renderListado() {
       <h3>${n.title}</h3>
       <p>${n.address || ''}</p>
       <p><small>${n.phone || ''}</small></p>
+      ${horario ? `<p><strong>Horario:</strong> <br>${horario}</p>` : ''}
+      ${attrs ? `<p><strong>Atributos:</strong> <br>${attrs}</p>` : ''}
     `;
     div.addEventListener('click', () => seleccionarNegocio(n.place_id));
     listadoEl.appendChild(div);
@@ -92,11 +109,19 @@ function mostrarNegociosEnMapa() {
 
   filtrados.forEach(n => {
     if (!n.latitude || !n.longitude) return;
-    const popup = new mapboxgl.Popup({offset: 25}).setHTML(`
+
+    const horario = formatearJSON(n.work_time);
+    const attrs = formatearJSON(n.attributes);
+
+    const popupHTML = `
       <h3>${n.title}</h3>
       <p>${n.address || ''}</p>
       <p><small>${n.phone || ''}</small></p>
-    `);
+      ${horario ? `<p><strong>Horario:</strong> <br>${horario}</p>` : ''}
+      ${attrs ? `<p><strong>Atributos:</strong> <br>${attrs}</p>` : ''}
+    `;
+
+    const popup = new mapboxgl.Popup({offset: 25}).setHTML(popupHTML);
     const marker = new mapboxgl.Marker()
       .setLngLat([n.longitude, n.latitude])
       .setPopup(popup)
@@ -113,7 +138,6 @@ async function cargarFiltros() {
     console.error('Error cargando filtros:', error);
     return;
   }
-  console.log('Filtros cargados:', data.length);
   const provincias = [...new Set(data.map(d => d.province).filter(Boolean))].sort();
   const ciudades = [...new Set(data.map(d => d.city).filter(Boolean))].sort();
 
@@ -127,7 +151,6 @@ async function cargarNegocios() {
     console.error('Error cargando negocios:', error);
     return;
   }
-  console.log('Negocios cargados:', data.length);
   negocios = data;
   renderListado();
   mostrarNegociosEnMapa();
@@ -146,12 +169,9 @@ searchInput.addEventListener('input', () => {
   mostrarNegociosEnMapa();
 });
 
-// Espera a que todo el DOM esté listo
 window.onload = () => {
-  // Forzar resize del mapa para que cargue bien
   map.resize();
 
-  // Solo cargar después de que el mapa esté listo
   map.on('load', () => {
     cargarFiltros();
     cargarNegocios();
