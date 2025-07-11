@@ -367,6 +367,22 @@ body {
         max-height: 90vh;
     }
 
+    .modal-header {
+        padding: 1rem 1.25rem;
+    }
+    .modal-header h2 {
+        font-size: 1.1rem;
+    }
+
+    .modal-details {
+        padding: 1rem 1.25rem;
+        font-size: 0.85rem;
+    }
+
+    .detail-item {
+        gap: 0.75rem;
+    }
+
     .listings-header {
         padding: 0.75rem 1rem;
     }
