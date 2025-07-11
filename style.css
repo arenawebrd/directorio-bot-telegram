@@ -236,6 +236,34 @@ body {
 .modal-header p { margin: 0; color: var(--gray); }
 .rating-stars { color: #fbbc05; }
 
+.modal-actions {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    padding: 1rem 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.action-button {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    text-decoration: none;
+    color: var(--primary-color);
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.action-button svg {
+    width: 28px;
+    height: 28px;
+    background-color: var(--primary-color);
+    color: white;
+    border-radius: 50%;
+    padding: 8px;
+}
+
 .modal-details {
     padding: 1.5rem;
     display: grid;
@@ -252,6 +280,15 @@ body {
     height: 20px;
     color: var(--primary-color);
     flex-shrink: 0;
+}
+
+.detail-item a {
+    text-decoration: none;
+    color: inherit;
+}
+
+.detail-item a:hover {
+    text-decoration: underline;
 }
 
 .work-time-table {
