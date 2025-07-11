@@ -86,3 +86,9 @@ main {
     margin-bottom: 8px;
   }
 }
+#map {
+  flex-grow: 1;
+  min-height: 300px;  /* obligatorio para que mapbox renderice */
+  height: 100%;
+}
+
