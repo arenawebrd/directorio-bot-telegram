@@ -133,27 +133,38 @@ function mostrarNegociosEnMapa() {
 }
 
 async function cargarFiltros() {
-  const { data, error } = await supabase.from('listings').select('province, city');
-  if (error) {
-    console.error('Error cargando filtros:', error);
-    return;
-  }
-  const provincias = [...new Set(data.map(d => d.province).filter(Boolean))].sort();
-  const ciudades = [...new Set(data.map(d => d.city).filter(Boolean))].sort();
+  try {
+    console.log('Cargando filtros...');
+    const { data, error } = await supabase.from('listings').select('province, city');
+    if (error) throw error;
 
-  provinciaSelect.innerHTML = '<option value="">Todas Provincias</option>' + provincias.map(p => `<option value="${p}">${p}</option>`).join('');
-  ciudadSelect.innerHTML = '<option value="">Todas Ciudades</option>' + ciudades.map(c => `<option value="${c}">${c}</option>`).join('');
+    console.log('Datos filtros:', data);
+
+    const provincias = [...new Set(data.map(d => d.province).filter(Boolean))].sort();
+    const ciudades = [...new Set(data.map(d => d.city).filter(Boolean))].sort();
+
+    provinciaSelect.innerHTML = '<option value="">Todas Provincias</option>' + provincias.map(p => `<option value="${p}">${p}</option>`).join('');
+    ciudadSelect.innerHTML = '<option value="">Todas Ciudades</option>' + ciudades.map(c => `<option value="${c}">${c}</option>`).join('');
+  } catch(err) {
+    console.error('Error cargando filtros:', err);
+    alert('Error al cargar filtros: ' + err.message);
+  }
 }
 
 async function cargarNegocios() {
-  const { data, error } = await supabase.from('listings').select('*').limit(100);
-  if (error) {
-    console.error('Error cargando negocios:', error);
-    return;
+  try {
+    console.log('Cargando negocios...');
+    const { data, error } = await supabase.from('listings').select('*').limit(100);
+    if (error) throw error;
+
+    console.log('Negocios cargados:', data.length);
+    negocios = data;
+    renderListado();
+    mostrarNegociosEnMapa();
+  } catch(err) {
+    console.error('Error cargando negocios:', err);
+    alert('Error al cargar negocios: ' + err.message);
   }
-  negocios = data;
-  renderListado();
-  mostrarNegociosEnMapa();
 }
 
 provinciaSelect.addEventListener('change', () => {
