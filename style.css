@@ -189,7 +189,7 @@ body {
     border-radius: 12px;
     width: 80%;
     max-width: 380px;
-    max-height: 85vh;
+    max-height: 90vh;
     overflow: hidden;
     display: flex;
     flex-direction: column;
@@ -238,9 +238,9 @@ body {
 
 .modal-actions {
     display: flex;
-    justify-content: center;
-    gap: 2rem;
-    padding: 1rem 0;
+    justify-content: flex-start;
+    gap: 1.5rem;
+    padding: 1rem 1.5rem;
     border-bottom: 1px solid var(--border-color);
 }
 
